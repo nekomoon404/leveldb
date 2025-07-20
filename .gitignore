@@ -2,6 +2,7 @@
 *.sw*
 .vscode
 .DS_Store
+.clion.source.upload.marker
 
 # Build directory.
 build/

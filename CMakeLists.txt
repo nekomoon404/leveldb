@@ -17,7 +17,8 @@ endif(NOT CMAKE_C_STANDARD)
 # C++ standard can be overridden when this is used as a sub-project.
 if(NOT CMAKE_CXX_STANDARD)
   # This project requires C++11.
-  set(CMAKE_CXX_STANDARD 11)
+  # std::is_standard_layout_v in util/no_destructor.h since C++17
+  set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif(NOT CMAKE_CXX_STANDARD)
@@ -32,6 +33,7 @@ endif (WIN32)
 
 option(LEVELDB_BUILD_TESTS "Build LevelDB's unit tests" ON)
 option(LEVELDB_BUILD_BENCHMARKS "Build LevelDB's benchmarks" ON)
+option(LEVELDB_BUILD_SAMPLES "Build LevelDB's samples" ON)
 option(LEVELDB_INSTALL "Install LevelDB's header and library" ON)
 
 include(CheckIncludeFile)
@@ -467,6 +469,33 @@ int main() {
     target_link_libraries(db_bench_tree_db kyotocabinet)
   endif(HAVE_KYOTOCABINET)
 endif(LEVELDB_BUILD_BENCHMARKS)
+
+if(LEVELDB_BUILD_SAMPLES)
+  # 设置 samples 目录路径
+  set(SAMPLES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/samples)
+
+  # 查找 samples 目录下的所有 .cc 文件
+  file(GLOB SAMPLE_SOURCES "${SAMPLES_DIR}/*.cc")
+
+  # 为每个 sample 创建独立可执行文件
+  foreach(SAMPLE_SOURCE ${SAMPLE_SOURCES})
+    # 获取不带扩展名的文件名
+    get_filename_component(SAMPLE_NAME ${SAMPLE_SOURCE} NAME_WE)
+
+    # 创建可执行文件
+    add_executable(${SAMPLE_NAME} ${SAMPLE_SOURCE}
+            samples/sample.cc)
+
+    # 链接 LevelDB 库和其他依赖
+    target_link_libraries(${SAMPLE_NAME} PRIVATE leveldb)
+
+    # 添加包含目录（如果需要）
+    target_include_directories(${SAMPLE_NAME} PRIVATE ${SAMPLES_DIR})
+
+    # 安装示例到 bin 目录（可选）
+    install(TARGETS ${SAMPLE_NAME} DESTINATION bin)
+  endforeach()
+endif(LEVELDB_BUILD_SAMPLES)
 
 if(LEVELDB_INSTALL)
   install(TARGETS leveldb
